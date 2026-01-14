@@ -143,7 +143,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 }
             } else 
                 echo '<div class="d-inline-block px-3 py-2 bg-info-subtle text-info rounded-3 soft-shadow" style="min-width:220px;">';
-                echo '<small>user : admin<br>pass : 123456</small>';
+               
                 echo '</div>';
             
             ?>

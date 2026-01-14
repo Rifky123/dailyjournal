@@ -11,7 +11,7 @@ if(!isset($_SESSION['username'])){
 // CRUD: Tambah Data
 if(isset($_POST['simpan'])){
     $judul = $_POST['judul'];
-    $isi = $_POST['isi'];
+    $keterangan = $_POST['keterangan'];
 
     $gambar = '';
     if(isset($_FILES['gambar']) && $_FILES['gambar']['name'] != ''){
@@ -20,8 +20,8 @@ if(isset($_POST['simpan'])){
         move_uploaded_file($tmp, "img/".$gambar);
     }
 
-    $sql = "INSERT INTO article(judul, isi, gambar, username, tanggal) VALUES(
-        '$judul','$isi','$gambar','".$_SESSION['username']."',NOW()
+    $sql = "INSERT INTO gallery(judul, keterangan, gambar) VALUES(
+        '$judul','$keterangan','$gambar'
     )";
     $conn->query($sql);
 }
@@ -33,7 +33,7 @@ if(isset($_POST['hapus'])){
     if($gambar != '' && file_exists("img/".$gambar)){
         unlink("img/".$gambar);
     }
-    $conn->query("DELETE FROM article WHERE id='$id'");
+    $conn->query("DELETE FROM gallery WHERE id='$id'");
 }
 
 // Pagination
@@ -42,8 +42,8 @@ $halaman = isset($_POST['hlm']) ? (int)$_POST['hlm'] : 1;
 $offset = ($halaman - 1) * $limit;
 
 // Ambil data
-$hasil = $conn->query("SELECT * FROM article ORDER BY tanggal DESC LIMIT $offset,$limit");
-$total_data = $conn->query("SELECT * FROM article")->num_rows;
+$hasil = $conn->query("SELECT * FROM gallery ORDER BY id DESC LIMIT $offset,$limit");
+$total_data = $conn->query("SELECT * FROM gallery")->num_rows;
 $total_hlm = ceil($total_data / $limit);
 ?>
 
@@ -53,11 +53,11 @@ $total_hlm = ceil($total_data / $limit);
     <div class="col-md-3">
       <input type="text" name="judul" class="form-control" placeholder="Judul" required>
     </div>
-    <div class="col-md-5">
-      <textarea name="isi" class="form-control" placeholder="Isi Artikel" required></textarea>
+    <div class="col-md-4">
+      <input type="text" name="keterangan" class="form-control" placeholder="Keterangan" required>
     </div>
-    <div class="col-md-2">
-      <input type="file" name="gambar" class="form-control">
+    <div class="col-md-3">
+      <input type="file" name="gambar" class="form-control" required>
     </div>
     <div class="col-md-2">
       <button type="submit" name="simpan" class="btn btn-primary w-100">Tambah</button>
@@ -66,30 +66,36 @@ $total_hlm = ceil($total_data / $limit);
 </form>
 
 <!-- TABEL DATA -->
-<table class="table table-hover align-middle">
-  <thead class="table-dark">
+<table class="table table-bordered table-hover">
+  <thead class="table-dark text-center">
     <tr>
       <th>No</th>
-      <th>Judul</th>
-      <th>Isi</th>
       <th>Gambar</th>
+      <th>Judul</th>
+      <th>Keterangan</th>
       <th>Aksi</th>
     </tr>
   </thead>
   <tbody>
   <?php $no=$offset+1; while($row=$hasil->fetch_assoc()){ ?>
     <tr>
-      <td><?= $no++ ?></td>
-      <td><strong><?= $row['judul'] ?></strong><br><small class="text-muted"><?= $row['tanggal'] ?> | <?= $row['username'] ?></small></td>
-      <td><?= substr($row['isi'],0,120) ?>...</td>
-      <td>
-        <?php if($row['gambar']!=''){ ?>
-          <img src="img/<?= $row['gambar'] ?>" width="100">
+      <td class="text-center"><?= $no++ ?></td>
+      <td class="text-center">
+        <?php if($row['gambar'] != ''){ ?>
+            <img src="img/<?= $row['gambar'] ?>" width="80">
         <?php } else { echo "<small class='text-muted fst-italic'>Tidak ada gambar</small>"; } ?>
       </td>
-      <td>
-        <button class="btn btn-sm btn-success editBtn" data-id="<?= $row['id'] ?>" data-judul="<?= $row['judul'] ?>" data-isi="<?= $row['isi'] ?>" data-gambar="<?= $row['gambar'] ?>">✏️</button>
-        <button class="btn btn-sm btn-danger hapusBtn" data-id="<?= $row['id'] ?>" data-gambar="<?= $row['gambar'] ?>">❌</button>
+      <td><?= $row['judul'] ?></td>
+      <td><?= $row['keterangan'] ?></td>
+      <td class="text-center">
+        <button class="btn btn-sm btn-success editBtn" 
+                data-id="<?= $row['id'] ?>" 
+                data-judul="<?= $row['judul'] ?>" 
+                data-keterangan="<?= $row['keterangan'] ?>" 
+                data-gambar="<?= $row['gambar'] ?>">✏️</button>
+        <button class="btn btn-sm btn-danger hapusBtn" 
+                data-id="<?= $row['id'] ?>" 
+                data-gambar="<?= $row['gambar'] ?>">❌</button>
       </td>
     </tr>
   <?php } ?>
@@ -110,20 +116,20 @@ $total_hlm = ceil($total_data / $limit);
 <script>
 $(document).ready(function(){
 
-    // Tambah Data via AJAX
+    // Tambah data via AJAX
     $('#formTambah').submit(function(e){
         e.preventDefault();
         var formData = new FormData(this);
         formData.append('simpan', true);
 
         $.ajax({
-            url:'article_data.php',
+            url:'gallery_data.php',
             type:'POST',
             data:formData,
             contentType:false,
             processData:false,
             success:function(res){
-                $('#konten').load('article.php'); // reload article content
+                $('#konten').load('gallery.php');
             }
         });
     });
@@ -131,22 +137,23 @@ $(document).ready(function(){
     // Pagination
     $(document).on('click','.halaman', function(){
         var hlm = $(this).data('hlm');
-        $.post('article_data.php', {hlm: hlm}, function(res){
+        $.post('gallery_data.php', {hlm: hlm}, function(res){
             $('#konten').html(res);
         });
     });
 
-    // Edit modal (sederhana)
+    // Edit modal sederhana
     $(document).on('click','.editBtn',function(){
         var id=$(this).data('id');
         var judul=$(this).data('judul');
-        var isi=$(this).data('isi');
+        var ket=$(this).data('keterangan');
         var gambar=$(this).data('gambar');
+
         var html = `<form id="formEdit" method="post" enctype="multipart/form-data">
             <input type="hidden" name="id" value="${id}">
             <input type="hidden" name="gambar_lama" value="${gambar}">
             <div class="mb-2"><input type="text" name="judul" class="form-control" value="${judul}" required></div>
-            <div class="mb-2"><textarea name="isi" class="form-control" required>${isi}</textarea></div>
+            <div class="mb-2"><input type="text" name="keterangan" class="form-control" value="${ket}" required></div>
             <div class="mb-2"><input type="file" name="gambar" class="form-control"></div>
             <button type="submit" name="simpan" class="btn btn-primary">Simpan</button>
             <button type="button" class="btn btn-secondary" id="batalEdit">Batal</button>
@@ -155,16 +162,16 @@ $(document).ready(function(){
     });
 
     $(document).on('click','#batalEdit',function(){
-        $('#konten').load('article_data.php');
+        $('#konten').load('gallery_data.php');
     });
 
-    // Hapus Data
+    // Hapus data via AJAX
     $(document).on('click','.hapusBtn', function(){
         if(confirm('Hapus data ini?')){
             var id = $(this).data('id');
             var gambar = $(this).data('gambar');
-            $.post('article_data.php',{hapus:true, id:id, gambar:gambar},function(res){
-                $('#konten').load('article_data.php');
+            $.post('gallery_data.php',{hapus:true, id:id, gambar:gambar},function(res){
+                $('#konten').load('gallery_data.php');
             });
         }
     });

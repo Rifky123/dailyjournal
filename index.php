@@ -110,6 +110,8 @@
           <li class="nav-item"><a class="nav-link fw-semibold" href="#article">Article</a></li>
           <li class="nav-item"><a class="nav-link fw-semibold" href="#profile">Profile</a></li>
           <li class="nav-item"><a class="nav-link" href="login.php" target="_blank">Login</a></li>
+          <li class="nav-item"><a class="nav-link fw-semibold" href="#gallery">Gallery</a></li>
+
         </ul>
 
         <div class="d-flex ms-lg-3">
@@ -244,6 +246,39 @@
         }
       } else {
         echo "<p class='text-center'>Tidak ada artikel yang tersedia.</p>";
+      }
+      ?>
+
+    </div>
+  </div>
+</section>
+
+<!-- SECTION: GALLERY -->
+<section id="gallery" class="py-5">
+  <div class="container mb-5 text-center">
+    <h1 class="text-primary">Gallery</h1>
+  </div>
+
+  <div class="container">
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+
+      <?php
+      $qGallery = mysqli_query($conn, "SELECT * FROM gallery ORDER BY id DESC");
+      if (mysqli_num_rows($qGallery) > 0) {
+        while ($g = mysqli_fetch_assoc($qGallery)) {
+      ?>
+          <div class="col">
+            <div class="card h-100">
+              <img src="img/<?php echo $g['gambar']; ?>" class="card-img-top" style="height:200px;object-fit:cover;">
+              <div class="card-body text-center">
+                <h6 class="fw-semibold"><?php echo $g['judul']; ?></h6>
+              </div>
+            </div>
+          </div>
+      <?php
+        }
+      } else {
+        echo "<p class='text-center'>Belum ada gallery.</p>";
       }
       ?>
 
